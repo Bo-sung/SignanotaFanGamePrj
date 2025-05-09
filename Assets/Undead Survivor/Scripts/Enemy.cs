@@ -70,4 +70,35 @@ public class Enemy : MonoBehaviour
             isLive = false;
         }
     }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (!collision.CompareTag("Bullet"))
+        {
+            return;
+        }
+
+        Bullet bullet = collision.GetComponent<Bullet>();
+        OnAttacked(bullet);
+    }
+
+    private void OnAttacked(Bullet _bullet)
+    {
+        m_health -= _bullet.Damage;
+
+        if (m_health > 0)
+        {
+        }
+        else
+        {
+            Dead();
+        }
+    }
+
+    private void Dead()
+    {
+        //m_health = 0;
+        //isLive = false;
+        gameObject.SetActive(false);
+    }
 }
