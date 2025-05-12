@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -11,9 +12,15 @@ public class Player : MonoBehaviour
     [SerializeField]
     Vector2 m_inputVec;
 
+    Vector2 m_firstMousePos;
+    Vector2 m_lastMousePos;
+
     Rigidbody2D m_rb;
     SpriteRenderer m_spr;
     Animator m_animator;
+    Mouse m_mouse;
+
+    bool m_dragging = false;
 
     public Vector2 InputVec => m_inputVec;
 
@@ -22,6 +29,8 @@ public class Player : MonoBehaviour
         m_rb = GetComponent<Rigidbody2D>();
         m_spr = GetComponent<SpriteRenderer>();
         m_animator = GetComponent<Animator>();
+
+        m_mouse = Mouse.current;
     }
 
     private void OnMove(InputValue value)
@@ -29,11 +38,45 @@ public class Player : MonoBehaviour
         m_inputVec = value.Get<Vector2>();
     }
 
+    private void OnMouseDrag()
+    {
+        m_lastMousePos = Mouse.current.position.ReadValue();
+    }
+
+    private void OnMouseUp()
+    {
+        Vector2 worldPos = Camera.main.ScreenToWorldPoint(m_lastMousePos);
+        Vector2 direction = (worldPos - m_rb.position);
+        float magnitude = direction.magnitude;
+        direction.Normalize();
+        direction *= -1; // invert direction
+        m_rb.AddForce(direction * m_speed, ForceMode2D.Impulse);
+    }
+
+    private void Update()
+    {
+        if(m_mouse.leftButton.isPressed && m_dragging == false)
+        {
+            m_dragging = true;
+        } 
+        else if(m_mouse.leftButton.isPressed == false && m_dragging == true)
+        {
+            m_dragging = false;
+            m_lastMousePos = Mouse.current.position.ReadValue();
+            Vector2 worldPos = Camera.main.ScreenToWorldPoint(m_lastMousePos);
+            Vector2 direction = (worldPos - m_rb.position);
+            float magnitude = direction.magnitude;
+            direction.Normalize();
+            direction *= -1; // invert direction
+            m_rb.AddForce(direction * m_speed * magnitude, ForceMode2D.Impulse);
+        }
+    }
+
     private void FixedUpdate()
     {
-        Vector2 moveDirection = m_inputVec.normalized;
-
-        m_rb.MovePosition(m_rb.position + moveDirection * m_speed * Time.fixedDeltaTime);
+        //Vector2 moveDirection = m_inputVec.normalized;
+        //
+        //m_rb.MovePosition(m_rb.position + moveDirection * m_speed * Time.fixedDeltaTime);
     }
 
     private void LateUpdate()

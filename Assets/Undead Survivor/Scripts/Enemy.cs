@@ -19,6 +19,8 @@ public class Enemy : MonoBehaviour
     SpriteRenderer m_spr;
     Animator m_animator;
 
+    bool frezeze = false;
+
 
     private void Awake()
     {
@@ -55,6 +57,8 @@ public class Enemy : MonoBehaviour
     {
         if (!isLive)
             return;
+        if (frezeze)
+            return;
 
         Vector2 targetPos = m_target.position;
         Vector2 moveDir = targetPos - m_rb.position;
@@ -73,6 +77,10 @@ public class Enemy : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (collision.CompareTag("Player"))
+        {
+            frezeze = true;
+        }
         if (!collision.CompareTag("Bullet"))
         {
             return;
