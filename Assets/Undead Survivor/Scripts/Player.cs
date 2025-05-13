@@ -18,10 +18,14 @@ public class Player : MonoBehaviour
     Rigidbody2D m_rb;
     SpriteRenderer m_spr;
     Animator m_animator;
-    Mouse m_mouse;
+    Scanner m_scanner;
 
-    bool m_dragging = false;
-    bool m_isMoving = false;
+    public Scanner Scanner => m_scanner;
+
+    //Mouse m_mouse;
+
+    //bool m_dragging = false;
+    //bool m_isMoving = false;
 
     public Vector2 InputVec => m_inputVec;
 
@@ -30,8 +34,9 @@ public class Player : MonoBehaviour
         m_rb = GetComponent<Rigidbody2D>();
         m_spr = GetComponent<SpriteRenderer>();
         m_animator = GetComponent<Animator>();
+        m_scanner = GetComponent<Scanner>();
 
-        m_mouse = Mouse.current;
+        //m_mouse = Mouse.current;
     }
 
     private void OnMove(InputValue value)
@@ -74,13 +79,13 @@ public class Player : MonoBehaviour
 
     private void OnDragStart()
     {
-        m_dragging = true;
+        //m_dragging = true;
         //GameManager.Instance.SetFreezeEnemy(true);
     }
 
     private void OnDragEnd()
     {
-        m_dragging = false;
+        //m_dragging = false;
         m_lastMousePos = Mouse.current.position.ReadValue();
         Vector2 worldPos = Camera.main.ScreenToWorldPoint(m_lastMousePos);
         Vector2 direction = (worldPos - m_rb.position);
@@ -88,7 +93,7 @@ public class Player : MonoBehaviour
         direction.Normalize();
         direction *= -1; // invert direction
         m_rb.AddForce(direction * m_speed * magnitude, ForceMode2D.Impulse);
-        m_isMoving = true;
+        //m_isMoving = true;
     }
 
     private void FixedUpdate()

@@ -5,13 +5,26 @@ public class Weapon : MonoBehaviour
     [SerializeField]
     int m_id = 0;
     [SerializeField]
-    int m_prefabId = 0;
+    PrefabsType m_prefabId = PrefabsType.Melee;
     [SerializeField]
     float m_damage = 0f;
     [SerializeField]
     int count = 0;
     [SerializeField]
     float m_attackSpeed = 0f;
+
+    private Player m_player;
+
+    private float m_timer = 0f;
+
+    private void Awake()
+    {
+        m_player = GetComponentInParent<Player>();
+        if (m_player == null)
+        {
+            Debug.LogError("Player not found in parent.");
+        }
+    }
 
     private void Start()
     {
@@ -23,9 +36,16 @@ public class Weapon : MonoBehaviour
         switch (m_id)
         {
             case 0:
-                transform.Rotate(Vector3.back * m_attackSpeed * Time.deltaTime);
+                transform.Rotate(Vector3.back * -m_attackSpeed * Time.deltaTime);
                 break;
             default:
+                m_timer += Time.deltaTime;
+
+                if (m_timer > m_attackSpeed)
+                {
+                    m_timer = 0f;
+                    Fire();
+                }
                 break;
         }
     }
@@ -41,7 +61,7 @@ public class Weapon : MonoBehaviour
         this.m_damage += damage;
         this.count += count;
 
-        if(m_id == 0)
+        if (m_id == 0)
         {
             Batch();
         }
@@ -52,8 +72,12 @@ public class Weapon : MonoBehaviour
         switch (m_id)
         {
             case 0:
-                m_attackSpeed = -150f;
+                m_attackSpeed = 150f;
                 Batch();
+                break;
+
+            case 1:
+                m_attackSpeed = 0.5f;
                 break;
             default:
                 break;
@@ -62,7 +86,7 @@ public class Weapon : MonoBehaviour
 
     private void Batch()
     {
-        for(int i = 0; i < count; i++)
+        for (int i = 0; i < count; i++)
         {
             SpawnData_Bullet data = new SpawnData_Bullet();
             data.damage = m_damage;
@@ -74,7 +98,7 @@ public class Weapon : MonoBehaviour
             }
             else
             {
-                bullet = GameManager.Instance.SpawnBullet(data).transform;
+                bullet = GameManager.Instance.SpawnBullet(m_prefabId, data).transform;
                 bullet.parent = transform;
             }
             bullet.localPosition = Vector3.zero;
@@ -84,6 +108,45 @@ public class Weapon : MonoBehaviour
             bullet.Rotate(rot);
             bullet.Translate(bullet.up * 1.5f, Space.World);
         }
+    }
+
+    void Fire()
+    {
+        if (m_id == 0)
+        {
+            return;
+        }
+        if (m_player == null)
+        {
+            Debug.LogError("Player not found.");
+            return;
+        }
+        var temp = m_player.Scanner.NearestTarget;
+        if (temp == null)
+        {
+            Debug.LogError("Target not found.");
+            return;
+        }
+
+        Vector3 targetPos = temp.position;
+
+        Vector3 direction = (targetPos - transform.position).normalized;
+
+
+
+        SpawnData_Bullet data = new SpawnData_Bullet();
+        data.damage = m_damage;
+        data.per = count;
+        data.direction = direction;
+        var instance = GameManager.Instance.SpawnBullet(m_prefabId, data);
+        if (instance == null)
+        {
+            Debug.LogError("Bullet instance is null.");
+            return;
+        }
+
+        instance.transform.position = transform.position;
+        instance.transform.rotation = Quaternion.FromToRotation(Vector3.up, direction);
     }
 
     private void Update()

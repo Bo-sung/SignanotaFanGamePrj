@@ -4,7 +4,8 @@ using UnityEngine;
 public enum PrefabsType
 {
     Enemy = 0,
-    Bullet = 1
+    Melee = 1,
+    Bullet_1 = 2,
 }
 
 public class GameManager : MonoBehaviour
@@ -93,9 +94,9 @@ public class GameManager : MonoBehaviour
         return temp;
     }
 
-    public GameObject SpawnBullet(SpawnData_Bullet _bulletData)
+    public GameObject SpawnBullet(PrefabsType type, SpawnData_Bullet _bulletData)
     {
-        var temp = PoolManager.Get(PrefabsType.Bullet);
+        var temp = PoolManager.Get(type);
         if (temp == null)
             return null;
         temp.GetComponent<Bullet>()?.Init(_bulletData);
