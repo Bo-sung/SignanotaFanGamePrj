@@ -19,7 +19,7 @@ public class Enemy : MonoBehaviour
     SpriteRenderer m_spr;
     Animator m_animator;
 
-    bool frezeze = false;
+   // public bool freeze = false;
 
 
     private void Awake()
@@ -44,7 +44,7 @@ public class Enemy : MonoBehaviour
         m_health = m_MaxHealth;
     }
 
-    public void Init(SpawnData _data)
+    public void Init(SpawnData_Enemy _data)
     {
         m_animator.runtimeAnimatorController = m_animatorController[_data.spriteType];
         m_speed = _data.speed;
@@ -57,8 +57,13 @@ public class Enemy : MonoBehaviour
     {
         if (!isLive)
             return;
-        if (frezeze)
-            return;
+
+        //if (freeze)
+        //{
+        //    m_rb.linearVelocity = Vector2.zero;
+        //    m_rb.angularVelocity = 0f;
+        //    return;
+        //}
 
         Vector2 targetPos = m_target.position;
         Vector2 moveDir = targetPos - m_rb.position;
@@ -79,7 +84,7 @@ public class Enemy : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            frezeze = true;
+            //freeze = true;
         }
         if (!collision.CompareTag("Bullet"))
         {

@@ -18,7 +18,25 @@ public class PoolManager : MonoBehaviour
         }
     }
 
-    public GameObject Get(int index)
+    public List<GameObject> GetPool(PrefabsType type)
+    {
+        return GetPool((int)type);
+    }
+
+    public List<GameObject> GetPool(int index)
+    {
+        // 인덱스 초과 방지
+        if (m_prefabs.Length <= index)
+            return null;
+        return m_pools[index];
+    }
+
+    public GameObject Get(PrefabsType type)
+    {
+        return Get((int)type);
+    }
+
+    private GameObject Get(int index)
     {
         GameObject select = null;
         // 인덱스 초과 방지

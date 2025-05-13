@@ -30,6 +30,23 @@ public class Weapon : MonoBehaviour
         }
     }
 
+    [ContextMenu("TestLVUp")]
+    public void TestLVUp()
+    {
+        LevelUp(1f, 1);
+    }
+
+    public void LevelUp(float damage, int count)
+    {
+        this.m_damage += damage;
+        this.count += count;
+
+        if(m_id == 0)
+        {
+            Batch();
+        }
+    }
+
     public void Init()
     {
         switch (m_id)
@@ -47,12 +64,25 @@ public class Weapon : MonoBehaviour
     {
         for(int i = 0; i < count; i++)
         {
-            Transform bullet = GameManager.Instance.PoolManager.Get(m_prefabId).transform;
-            bullet.parent = transform;
+            SpawnData_Bullet data = new SpawnData_Bullet();
+            data.damage = m_damage;
+            data.per = -1;  // -1은 무한대
+            Transform bullet;
+            if (i < transform.childCount)
+            {
+                bullet = transform.GetChild(i);
+            }
+            else
+            {
+                bullet = GameManager.Instance.SpawnBullet(data).transform;
+                bullet.parent = transform;
+            }
+            bullet.localPosition = Vector3.zero;
+            bullet.localRotation = Quaternion.identity;
+
             Vector3 rot = Vector3.forward * 360 * i / count;
             bullet.Rotate(rot);
             bullet.Translate(bullet.up * 1.5f, Space.World);
-            bullet.GetComponent<Bullet>().Init(m_damage, -1); // -1은 무한대
         }
     }
 

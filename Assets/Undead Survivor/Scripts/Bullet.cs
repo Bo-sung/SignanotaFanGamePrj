@@ -3,16 +3,21 @@ using UnityEngine;
 public class Bullet : MonoBehaviour
 {
     [SerializeField]
-    private float m_damage = 10f;
-    [SerializeField]
-    private int m_per;
+    private SpawnData_Bullet m_data;
 
-    public float Damage => m_damage;
-    public int Per => m_per;
+    public float Damage => m_data.damage;
+    public int Per => m_data.per;
 
-    public void Init(float damage, int per)
+    public void Init(SpawnData_Bullet _data)
     {
-        this.m_damage = damage;
-        this.m_per = per;
+        this.m_data = _data;
     }
 }
+
+[System.Serializable]
+public class SpawnData_Bullet
+{
+    public float damage;
+    public int per;
+}
+

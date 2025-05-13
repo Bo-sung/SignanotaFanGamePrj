@@ -5,7 +5,7 @@ public class Spawner : MonoBehaviour
     [SerializeField]
     private Transform[] SpawnPoints;
     [SerializeField]
-    private SpawnData[] m_SpawnData;
+    private SpawnData_Enemy[] m_SpawnData;
 
     float m_Timer = 0;
     int m_level = 0;
@@ -33,7 +33,7 @@ public class Spawner : MonoBehaviour
 
     private void Spawn(int type)
     {
-        var enemy = GameManager.Instance.PoolManager.Get(0);
+        var enemy = GameManager.Instance.SpawnEnemy(m_SpawnData[type]);
         if (enemy == null)
             return;
 
@@ -46,15 +46,13 @@ public class Spawner : MonoBehaviour
         // 적을 스폰 포인트에 생성
         enemy.transform.position = spawnPosition;
         enemy.transform.rotation = spawnRotation;
-
-        enemy.GetComponent<Enemy>().Init(m_SpawnData[type]);
         // 적을 활성화
         enemy.SetActive(true);
     }
 }
 
 [System.Serializable]
-public class SpawnData
+public class SpawnData_Enemy
 {
     public int spriteType;
     public float spawnTime;
