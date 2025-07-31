@@ -21,6 +21,11 @@ public class EquipmentManager : MonoBehaviour
         }
     }
 
+    public List<Weapon> GetEquippedWeapons()
+    {
+        return m_equippedWeapons;
+    }
+
     public void AddWeapon(WeaponData weaponData)
     {
         // Prevent equipping the same weapon twice.

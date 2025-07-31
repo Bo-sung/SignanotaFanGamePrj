@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -11,18 +13,21 @@ public class GameManager : MonoBehaviour
     [Header("Game State")]
     [SerializeField] private float m_GameTime = 0;
     public float GameTime => m_GameTime;
-    [SerializeField] private float m_MaxGameTime = 20f;
-    public float MaxGameTime => m_MaxGameTime;
+    [SerializeField] private float m_MaxGameTime = 1200f; // 20 minutes
 
     [Header("Level & Experience")]
     [SerializeField] private int m_Level = 1;
     public int Level => m_Level;
     [SerializeField] private int m_Experience = 0;
-    [SerializeField] private int[] m_nextExp; // Experience required for next level
+    [SerializeField] private int[] m_nextExp;
 
-    // Reference to the PoolManager
+    [Header("Upgrades & UI")]
+    [Tooltip("A list of all possible weapon upgrades in the game.")]
+    [SerializeField] private List<WeaponData> allWeapons;
+    [Tooltip("Reference to the Level Up UI controller.")]
+    [SerializeField] private LevelUpUI levelUpUI;
+
     public PoolManager poolManager { get; private set; }
-    // Reference to the EquipmentManager
     public EquipmentManager equipmentManager { get; private set; }
 
     private void Awake()
@@ -46,16 +51,27 @@ public class GameManager : MonoBehaviour
                 Debug.LogError("Player is not assigned in the GameManager.");
             }
 
-            // Initialize experience table
-            m_nextExp = new int[100]; // Max level 100
-            for (int i = 0; i < m_nextExp.Length; i++)
+            if (levelUpUI == null)
             {
-                m_nextExp[i] = Mathf.FloorToInt(10 * Mathf.Pow(1.1f, i));
+                levelUpUI = FindObjectOfType<LevelUpUI>();
+                if (levelUpUI == null) Debug.LogError("LevelUpUI not found in the scene.");
             }
+
+            InitializeExperienceTable();
         }
         else
         {
             Destroy(gameObject);
+        }
+    }
+
+    private void InitializeExperienceTable()
+    {
+        m_nextExp = new int[100];
+        m_nextExp[0] = 10;
+        for (int i = 1; i < m_nextExp.Length; i++)
+        {
+            m_nextExp[i] = Mathf.FloorToInt(m_nextExp[i - 1] * 1.2f);
         }
     }
 
@@ -65,6 +81,7 @@ public class GameManager : MonoBehaviour
         if (m_GameTime > m_MaxGameTime)
         {
             m_GameTime = m_MaxGameTime;
+            // Game Over or Win condition
         }
     }
 
@@ -76,18 +93,41 @@ public class GameManager : MonoBehaviour
 
     private void CheckLevelUp()
     {
-        if (m_Level - 1 >= m_nextExp.Length) return; // Max level reached
+        if (m_Level - 1 >= m_nextExp.Length) return; // Max level
 
         if (m_Experience >= m_nextExp[m_Level - 1])
         {
             m_Experience -= m_nextExp[m_Level - 1];
             m_Level++;
             Debug.Log($"Level Up! New Level: {m_Level}");
-            // Here you would typically pause the game and show the level up UI.
-            // For now, we just log it.
 
-            // Recursive call to handle multiple level ups at once
-            CheckLevelUp();
+            // Show level up options
+            levelUpUI.ShowLevelUpOptions(GetLevelUpRewards());
+
+            CheckLevelUp(); // Handle multiple level ups
         }
+    }
+
+    private List<WeaponData> GetLevelUpRewards()
+    {
+        List<WeaponData> availableUpgrades = new List<WeaponData>();
+        List<WeaponData> rewards = new List<WeaponData>();
+
+        // Find all weapons that the player doesn't have yet.
+        // This is a simplified logic. A real game would have more complex upgrade paths.
+        // For now, we only offer new weapons.
+        var equippedWeaponData = equipmentManager.GetEquippedWeapons().Select(w => w.weaponData).ToList();
+        availableUpgrades = allWeapons.Except(equippedWeaponData).ToList();
+
+        // Randomly pick 3 rewards from the available list.
+        System.Random rand = new System.Random();
+        while (rewards.Count < 3 && availableUpgrades.Count > 0)
+        {
+            int index = rand.Next(availableUpgrades.Count);
+            rewards.Add(availableUpgrades[index]);
+            availableUpgrades.RemoveAt(index);
+        }
+
+        return rewards;
     }
 }
