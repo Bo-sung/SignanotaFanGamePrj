@@ -20,7 +20,8 @@ public class Reposition : MonoBehaviour
         float diffX = Mathf.Abs(playerPos.x - newPos.x);
         float diffY = Mathf.Abs(playerPos.y - newPos.y);
 
-        Vector3 direction = player.InputVec;
+        // Use the player's rigidbody velocity to determine the direction of movement.
+        Vector3 direction = player.GetComponent<Rigidbody2D>().velocity.normalized;
         float dirX = direction.x < 0 ? -1 : 1;
         float dirY = direction.y < 0 ? -1 : 1;
 
@@ -34,12 +35,6 @@ public class Reposition : MonoBehaviour
                 else if (diffX < diffY)
                 {
                     transform.Translate(Vector3.up * dirY * 40);
-                }
-                break;
-            case "Enemy":
-                if(m_collider.enabled)
-                {
-                    transform.Translate(direction * 20 + new Vector3(Random.Range(-3f, 3f), Random.Range(-3f, 3f), Random.Range(-3f, 3f)));
                 }
                 break;
         }
