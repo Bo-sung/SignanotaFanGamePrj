@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro; // Make sure you have TextMeshPro imported
 
-// This class represents a single card in the level up selection screen.
 public class RewardCard : MonoBehaviour
 {
     [Header("UI Elements")]
@@ -11,35 +10,32 @@ public class RewardCard : MonoBehaviour
     [SerializeField] private TextMeshProUGUI descriptionText;
     [SerializeField] private Button selectButton;
 
-    private WeaponData m_weaponData;
+    private UpgradeData m_upgradeData;
     private LevelUpUI m_levelUpUI;
 
-    public void Setup(WeaponData weaponData, LevelUpUI levelUpUI)
+    public void Setup(UpgradeData upgradeData, LevelUpUI levelUpUI)
     {
-        m_weaponData = weaponData;
+        m_upgradeData = upgradeData;
         m_levelUpUI = levelUpUI;
 
-        // Populate the card's UI elements with data from the ScriptableObject
-        if (weaponData != null)
+        if (upgradeData != null && upgradeData.weaponData != null)
         {
-            iconImage.sprite = weaponData.weaponIcon;
-            nameText.text = weaponData.weaponName;
-            descriptionText.text = weaponData.weaponDescription;
+            iconImage.sprite = upgradeData.weaponData.weaponIcon;
+            nameText.text = upgradeData.weaponData.weaponName;
+            descriptionText.text = upgradeData.upgradeDescription;
         }
 
-        // Add a listener to the button to handle the selection
         selectButton.onClick.AddListener(HandleSelection);
     }
 
     private void HandleSelection()
     {
-        if (m_weaponData != null && m_levelUpUI != null)
+        if (m_upgradeData != null && m_levelUpUI != null)
         {
-            m_levelUpUI.OnRewardSelected(m_weaponData);
+            m_levelUpUI.OnRewardSelected(m_upgradeData);
         }
     }
 
-    // Clean up the listener when the card is destroyed
     private void OnDestroy()
     {
         selectButton.onClick.RemoveListener(HandleSelection);

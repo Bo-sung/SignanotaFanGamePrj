@@ -108,24 +108,36 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private List<WeaponData> GetLevelUpRewards()
+    private List<UpgradeData> GetLevelUpRewards()
     {
-        List<WeaponData> availableUpgrades = new List<WeaponData>();
-        List<WeaponData> rewards = new List<WeaponData>();
+        List<UpgradeData> rewards = new List<UpgradeData>();
+        List<WeaponData> availableNewWeapons = allWeapons.Except(equipmentManager.GetEquippedWeapons().Select(w => w.weaponData)).ToList();
+        List<Weapon> equippedWeapons = equipmentManager.GetEquippedWeapons();
 
-        // Find all weapons that the player doesn't have yet.
-        // This is a simplified logic. A real game would have more complex upgrade paths.
-        // For now, we only offer new weapons.
-        var equippedWeaponData = equipmentManager.GetEquippedWeapons().Select(w => w.weaponData).ToList();
-        availableUpgrades = allWeapons.Except(equippedWeaponData).ToList();
+        // Create a combined list of potential upgrades
+        List<UpgradeData> potentialUpgrades = new List<UpgradeData>();
 
-        // Randomly pick 3 rewards from the available list.
-        System.Random rand = new System.Random();
-        while (rewards.Count < 3 && availableUpgrades.Count > 0)
+        // Add new weapons to the list
+        foreach (var weapon in availableNewWeapons)
         {
-            int index = rand.Next(availableUpgrades.Count);
-            rewards.Add(availableUpgrades[index]);
-            availableUpgrades.RemoveAt(index);
+            potentialUpgrades.Add(new UpgradeData { type = UpgradeData.UpgradeType.NewWeapon, weaponData = weapon, upgradeDescription = "New! " + weapon.weaponDescription });
+        }
+
+        // Add upgrades for existing weapons
+        foreach (var weapon in equippedWeapons)
+        {
+            // This is a placeholder for a more complex upgrade system.
+            // A real game might have specific upgrade paths for each weapon.
+            potentialUpgrades.Add(new UpgradeData { type = UpgradeData.UpgradeType.WeaponUpgrade, weaponData = weapon.weaponData, upgradeDescription = "Upgrade! Damage +1" });
+        }
+
+        // Randomly pick 3 unique rewards
+        System.Random rand = new System.Random();
+        while (rewards.Count < 3 && potentialUpgrades.Count > 0)
+        {
+            int index = rand.Next(potentialUpgrades.Count);
+            rewards.Add(potentialUpgrades[index]);
+            potentialUpgrades.RemoveAt(index);
         }
 
         return rewards;
