@@ -73,3 +73,15 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Unused script files from the original asset
+Assets/Undead Survivor/Scripts/BasicBase.cs
+Assets/Undead Survivor/Scripts/BasicBase.cs.meta
+Assets/Undead Survivor/Scripts/BilliardCharacterController.cs
+Assets/Undead Survivor/Scripts/BilliardCharacterController.cs.meta
+Assets/Undead Survivor/Scripts/Pool.cs
+Assets/Undead Survivor/Scripts/Pool.cs.meta
+Assets/Undead Survivor/Scripts/PoolBase.cs
+Assets/Undead Survivor/Scripts/PoolBase.cs.meta
+Assets/Undead Survivor/Scripts/SpawnData_Bullet.cs
+Assets/Undead Survivor/Scripts/SpawnData_Bullet.cs.meta

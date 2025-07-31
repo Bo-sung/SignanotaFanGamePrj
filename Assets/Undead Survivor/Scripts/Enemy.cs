@@ -1,117 +1,119 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(SpriteRenderer))]
+[RequireComponent(typeof(Animator))]
 public class Enemy : MonoBehaviour
 {
+    public EnemyData enemyData;
 
-    [SerializeField]
-    float m_speed = 1f;
-    [SerializeField]
-    float m_health = 0f;
-    [SerializeField]
-    float m_MaxHealth = 0f;
-    [SerializeField]
-    Rigidbody2D m_target;
-    [SerializeField]
-    RuntimeAnimatorController[] m_animatorController;
+    private float m_currentHealth;
+    private Rigidbody2D m_rb;
+    private SpriteRenderer m_spr;
+    private Animator m_animator;
+    private Transform m_target;
 
-    bool isLive = false;
-    Rigidbody2D m_rb;
-    SpriteRenderer m_spr;
-    Animator m_animator;
-
-   // public bool freeze = false;
-
+    private bool m_isLive = false;
 
     private void Awake()
     {
         m_rb = GetComponent<Rigidbody2D>();
         m_spr = GetComponent<SpriteRenderer>();
         m_animator = GetComponent<Animator>();
-        if (m_target == null)
-        {
-            var target = GameManager.Instance.Player;
-            m_target = target.GetComponent<Rigidbody2D>();
-        }
     }
 
     private void OnEnable()
     {
-        if (m_target == null)
+        // Find the player when the enemy is enabled
+        if (GameManager.Instance != null && GameManager.Instance.Player != null)
         {
-            var target = GameManager.Instance.Player;
-            m_target = target.GetComponent<Rigidbody2D>();
+            m_target = GameManager.Instance.Player.transform;
         }
-        m_health = m_MaxHealth;
+        else
+        {
+            Debug.LogError("Player not found!");
+            m_isLive = false;
+            return;
+        }
+
+        if (enemyData != null)
+        {
+            Init();
+        }
+        else
+        {
+            Debug.LogError("EnemyData is not assigned!");
+            m_isLive = false;
+        }
     }
 
-    public void Init(SpawnData_Enemy _data)
+    public void Init()
     {
-        m_animator.runtimeAnimatorController = m_animatorController[_data.spriteType];
-        m_speed = _data.speed;
-        m_MaxHealth = _data.health;
-        m_health = _data.health;
-        isLive = true;
+        m_currentHealth = enemyData.maxHealth;
+        m_animator.runtimeAnimatorController = enemyData.animatorController;
+        m_isLive = true;
     }
 
     private void FixedUpdate()
     {
-        if (!isLive)
-            return;
+        if (!m_isLive || m_target == null) return;
 
-        //if (freeze)
-        //{
-        //    m_rb.linearVelocity = Vector2.zero;
-        //    m_rb.angularVelocity = 0f;
-        //    return;
-        //}
+        // Movement towards the player
+        Vector2 direction = (m_target.position - transform.position).normalized;
+        m_rb.MovePosition(m_rb.position + direction * enemyData.speed * Time.fixedDeltaTime);
 
-        Vector2 targetPos = m_target.position;
-        Vector2 moveDir = targetPos - m_rb.position;
-        moveDir.Normalize();
-        Vector2 moveVector = moveDir * m_speed * Time.fixedDeltaTime;
-
-        m_rb.MovePosition(m_rb.position + moveVector);
-
-        m_spr.flipX = moveDir.x < 0;
-
-        if (m_health <= 0)
-        {
-            isLive = false;
-        }
+        // Flip sprite based on movement direction
+        m_spr.flipX = direction.x < 0;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("Player"))
+        // Collision with a bullet
+        if (collision.CompareTag("Bullet"))
         {
-            //freeze = true;
+            Bullet bullet = collision.GetComponent<Bullet>();
+            if (bullet != null)
+            {
+                TakeDamage(bullet.damage);
+            }
+            // Optionally, disable the bullet if it doesn't have penetration
+            if (bullet.per <= 0)
+            {
+                collision.gameObject.SetActive(false);
+            }
         }
-        if (!collision.CompareTag("Bullet"))
-        {
-            return;
-        }
-
-        Bullet bullet = collision.GetComponent<Bullet>();
-        OnAttacked(bullet);
-    }
-
-    private void OnAttacked(Bullet _bullet)
-    {
-        m_health -= _bullet.Damage;
-
-        if (m_health > 0)
-        {
-        }
-        else
-        {
-            Dead();
+        // Collision with the player
+        else if (collision.CompareTag("Player"))
+        { 
+            // Deal damage to the player, knockback, etc.
+            // This part will be implemented later.
         }
     }
 
-    private void Dead()
+    public void TakeDamage(float damage)
     {
-        //m_health = 0;
-        //isLive = false;
-        gameObject.SetActive(false);
+        if (!m_isLive) return;
+
+        m_currentHealth -= damage;
+
+        if (m_currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        m_isLive = false;
+
+        // Drop item if specified, using the pool manager
+        if (enemyData.dropItemPrefab != null)
+        {
+            GameObject gem = GameManager.Instance.poolManager.Get(enemyData.dropItemPrefab);
+            gem.transform.position = transform.position;
+        }
+
+        // Release the enemy back to the pool
+        GameManager.Instance.poolManager.Release(gameObject);
     }
 }

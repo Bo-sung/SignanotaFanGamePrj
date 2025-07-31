@@ -81,19 +81,28 @@
                     "name": "Sprint",
                     "type": "Button",
                     "id": "641cd816-40e6-41b4-8c3d-04687c349290",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
                 },
                 {
-                    "name": "MouseClick",
+                    "name": "Click",
                     "type": "Button",
-                    "id": "96cb66f5-6b9b-48a9-9ee1-9a1b77db4904",
+                    "id": "cf4d5893-9a7f-456d-a82d-d8d481e03c0b",
                     "expectedControlType": "",
                     "processors": "",
-                    "interactions": "Press,Press(behavior=1)",
+                    "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Position",
+                    "type": "Value",
+                    "id": "3e664076-962a-4034-87b8-105351abe722",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -484,12 +493,23 @@
                 },
                 {
                     "name": "",
-                    "id": "fd912b89-ba5f-4098-9ed1-8f3dc4a4c9f2",
+                    "id": "3bdcf3d3-541e-4af4-9c92-759d31415889",
                     "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
-                    "groups": ";Keyboard&Mouse;Touch",
-                    "action": "MouseClick",
+                    "groups": "",
+                    "action": "Click",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f7299dfe-7782-4de1-a183-d4d20486ddf1",
+                    "path": "<Mouse>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Position",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

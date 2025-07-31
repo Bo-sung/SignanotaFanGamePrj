@@ -261,6 +261,8 @@ GameObject:
   - component: {fileID: 247464360}
   - component: {fileID: 247464359}
   - component: {fileID: 247464362}
+  - component: {fileID: 247464364}
+  - component: {fileID: 247464363}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -368,7 +370,7 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!70 &247464358
 CapsuleCollider2D:
@@ -490,6 +492,136 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   m_nearestTarget: {fileID: 0}
+--- !u!120 &247464363
+LineRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 247464354}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Positions:
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 1}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 1
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 1, g: 1, b: 1, a: 1}
+      key1: {r: 1, g: 1, b: 1, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 0
+    numCapVertices: 0
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_MaskInteraction: 0
+  m_UseWorldSpace: 1
+  m_Loop: 0
+  m_ApplyActiveColorSpace: 1
+--- !u!114 &247464364
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 247464354}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5438505d14d44443bf26682c8622fcb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxForce: 100
+  minForce: 20
+  dragSensitivity: 1
+  friction: 0.98
+  stopThreshold: 0.1
+  clickRadius: 2
+  trajectoryLine: {fileID: 247464363}
+  aimIndicator: {fileID: 0}
+  trajectoryPoints: 30
+  clickAction: {fileID: -3073437283714343458, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  positionAction: {fileID: -4447887674297401663, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
 --- !u!1 &286867417
 GameObject:
   m_ObjectHideFlags: 0
@@ -660,7 +792,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 5.1180553
+  orthographic size: 6.7777777
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -5252,7 +5384,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_id: 1
-  m_prefabId: 2
+  m_Bullet_Data:
+    spawnData:
+      damage: 0
+      per: 0
+      direction: {x: 0, y: 0, z: 0}
   m_damage: 11
   count: 1
   m_attackSpeed: 0.5
@@ -9768,10 +9904,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68fe513782f14f946a08049fe44aaa72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_prefabs:
-  - {fileID: 7848654602116432083, guid: 9b33ac44286782842aae10695ac81785, type: 3}
-  - {fileID: 829201799675871625, guid: 265a79f3e2bd69549860bc82d8eea07d, type: 3}
-  - {fileID: 5227656895006000740, guid: b05c6ce05a616e446b716315e9cc3984, type: 3}
+  enemyPool: {fileID: 0}
+  bulletPool: {fileID: 0}
 --- !u!1 &1537718325
 GameObject:
   m_ObjectHideFlags: 0
@@ -18655,18 +18789,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SpawnPoints: []
   m_SpawnData:
-  - spriteType: 0
+  - spawnData:
+      status:
+        max_health: 0
+        speed: 0
+      Animcontroller: {fileID: 0}
     spawnTime: 0.5
-    health: 10
-    speed: 1.5
-  - spriteType: 1
+  - spawnData:
+      status:
+        max_health: 0
+        speed: 0
+      Animcontroller: {fileID: 0}
     spawnTime: 0.2
-    health: 10
-    speed: 2.4
-  - spriteType: 2
+  - spawnData:
+      status:
+        max_health: 0
+        speed: 0
+      Animcontroller: {fileID: 0}
     spawnTime: 0.2
-    health: 10
-    speed: 3
 --- !u!1 &1986572627
 GameObject:
   m_ObjectHideFlags: 0
@@ -18712,7 +18852,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_id: 0
-  m_prefabId: 1
+  m_Bullet_Data:
+    spawnData:
+      damage: 0
+      per: 0
+      direction: {x: 0, y: 0, z: 0}
   m_damage: 11
   count: 1
   m_attackSpeed: 150

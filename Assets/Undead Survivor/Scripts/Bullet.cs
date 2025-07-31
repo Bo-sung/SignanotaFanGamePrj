@@ -1,49 +1,53 @@
-using Unity.Android.Gradle.Manifest;
 using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    [SerializeField]
-    private SpawnData_Bullet m_data;
+    public float damage;
+    public int per; // 관통 횟수
 
-    public float Damage => m_data.damage;
-    public int Per => m_data.per;
-
-    Rigidbody2D m_rb;
+    private Rigidbody2D m_rb;
 
     private void Awake()
     {
         m_rb = GetComponent<Rigidbody2D>();
     }
 
-    public void Init(SpawnData_Bullet _data)
+    public void Init(float damage, int per, Vector3 dir, float speed)
     {
-        this.m_data = _data;
-        if(m_data.per > -1)
+        this.damage = damage;
+        this.per = per;
+
+        if (per > -1)
         {
-            m_rb.linearVelocity = m_data.direction;
+            m_rb.velocity = dir * speed;
         }
+    }
+
+    public void SetDamage(float newDamage)
+    {
+        this.damage = newDamage;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (!collision.CompareTag("Enemy") || m_data.per == -1)
+        if (!collision.CompareTag("Enemy") || per == -100) // -100 is a magic number for infinite penetration
             return;
 
-        m_data.per--;
-        if (m_data.per == -1)
+        per--;
+        if (per < 0)
         {
-            m_rb.linearVelocity = Vector2.zero;
+            m_rb.velocity = Vector2.zero;
             gameObject.SetActive(false);
         }
     }
-}
 
-[System.Serializable]
-public class SpawnData_Bullet
-{
-    public float damage;
-    public int per;
-    public Vector3 direction;
+    private void OnDisable()
+    {
+        // Reset velocity when disabled to avoid unexpected movement when reused from pool
+        if (m_rb != null)
+        {
+            m_rb.velocity = Vector2.zero;
+        }
+    }
 }
 

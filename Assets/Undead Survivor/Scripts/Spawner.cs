@@ -2,60 +2,86 @@ using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
-    [SerializeField]
-    private Transform[] SpawnPoints;
-    [SerializeField]
-    private SpawnData_Enemy[] m_SpawnData;
+    [Header("Spawn Settings")]
+    [Tooltip("The different types of enemies to spawn, in order of difficulty based on game level.")]
+    [SerializeField] private EnemyData[] enemyTypes;
+    [Tooltip("The points where enemies can spawn. If empty, children of this object will be used.")]
+    [SerializeField] private Transform[] spawnPoints;
+    [Tooltip("The time in seconds between each spawn.")]
+    [SerializeField] private float spawnInterval = 2f;
 
-    float m_Timer = 0;
-    int m_level = 0;
+    private float m_timer = 0f;
 
     private void Awake()
     {
-        SpawnPoints = GetComponentsInChildren<Transform>();
+        if (spawnPoints == null || spawnPoints.Length == 0)
+        {
+            // Get all child transforms, excluding the parent itself.
+            spawnPoints = new Transform[transform.childCount];
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                spawnPoints[i] = transform.GetChild(i);
+            }
+        }
     }
+
     void Update()
     {
-        m_Timer += Time.deltaTime;
-        m_level = GameManager.Instance.Level;
+        m_timer += Time.deltaTime;
 
-        if (m_Timer > m_SpawnData[m_level].spawnTime)
+        if (m_timer > spawnInterval)
         {
-            m_Timer = 0;
+            m_timer = 0;
             Spawn();
         }
     }
 
     private void Spawn()
     {
-        Spawn(Random.Range(0, m_SpawnData.Length - 1));
-    }
-
-    private void Spawn(int type)
-    {
-        var enemy = GameManager.Instance.SpawnEnemy(m_SpawnData[type]);
-        if (enemy == null)
+        if (enemyTypes == null || enemyTypes.Length == 0)
+        {
+            Debug.LogWarning("No enemy types assigned to the spawner.");
             return;
+        }
 
-        // 랜덤 스폰 포인트
-        int randomIndex = UnityEngine.Random.Range(1, SpawnPoints.Length);
-        // 스폰 포인트의 위치를 가져옴
-        Vector3 spawnPosition = SpawnPoints[randomIndex].position;
-        // 스폰 포인트의 회전값을 가져옴
-        Quaternion spawnRotation = SpawnPoints[randomIndex].rotation;
-        // 적을 스폰 포인트에 생성
-        enemy.transform.position = spawnPosition;
-        enemy.transform.rotation = spawnRotation;
-        // 적을 활성화
-        enemy.SetActive(true);
+        // Determine which enemy to spawn based on the game level from GameManager
+        int enemyIndex = Mathf.Min(GameManager.Instance.Level, enemyTypes.Length - 1);
+        EnemyData enemyToSpawn = enemyTypes[enemyIndex];
+
+        if (enemyToSpawn == null || enemyToSpawn.enemyPrefab == null)
+        {
+            Debug.LogError($"EnemyData or its prefab is not set for level {GameManager.Instance.Level}.");
+            return;
+        }
+
+        // Get an enemy instance from the pool using the prefab from EnemyData
+        GameObject enemyObj = GameManager.Instance.poolManager.Get(enemyToSpawn.enemyPrefab);
+        if (enemyObj == null) return;
+
+        // Assign the EnemyData to the Enemy component
+        Enemy enemyScript = enemyObj.GetComponent<Enemy>();
+        if (enemyScript != null)
+        {
+            enemyScript.enemyData = enemyToSpawn;
+        }
+        else
+        {
+            Debug.LogError($"The enemy prefab {enemyToSpawn.enemyPrefab.name} is missing the Enemy script.");
+            // Release the object back if the script is missing to avoid issues
+            GameManager.Instance.poolManager.Release(enemyObj);
+            return;
+        }
+
+        // Position the enemy at a random spawn point
+        if (spawnPoints.Length > 0)
+        {
+            int spawnPointIndex = Random.Range(0, spawnPoints.Length);
+            enemyObj.transform.position = spawnPoints[spawnPointIndex].position;
+        }
+        else
+        {
+            Debug.LogWarning("No spawn points are set for the spawner.");
+            enemyObj.transform.position = transform.position; // Default to spawner's position
+        }
     }
-}
-
-[System.Serializable]
-public class SpawnData_Enemy
-{
-    public int spriteType;
-    public float spawnTime;
-    public int health;
-    public float speed;
 }

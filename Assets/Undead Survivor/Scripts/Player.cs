@@ -1,33 +1,29 @@
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(SpriteRenderer))]
+[RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(Scanner))]
 public class Player : MonoBehaviour
 {
-    [Header("Movement")]
-    [Tooltip("Movement speed of the player")]
-    [SerializeField]
-    float m_speed = 5f;
-    [SerializeField]
-    Vector2 m_inputVec;
+    [Header("Slingshot")]
+    [Tooltip("The force multiplier for the slingshot launch.")]
+    [SerializeField] private float launchForceMultiplier = 5f;
+    [Tooltip("The minimum drag distance required to register a launch.")]
+    [SerializeField] private float minDragDistance = 0.1f;
+    [Tooltip("The velocity magnitude at which the player is considered to be stopped.")]
+    [SerializeField] private float stopVelocityThreshold = 0.1f;
 
-    Vector2 m_firstMousePos;
-    Vector2 m_lastMousePos;
+    private Rigidbody2D m_rb;
+    private SpriteRenderer m_spr;
+    private Animator m_animator;
+    private Scanner m_scanner;
 
-    Rigidbody2D m_rb;
-    SpriteRenderer m_spr;
-    Animator m_animator;
-    Scanner m_scanner;
+    private bool m_isDragging = false;
+    private Vector2 m_dragStartPosition;
 
     public Scanner Scanner => m_scanner;
-
-    //Mouse m_mouse;
-
-    //bool m_dragging = false;
-    //bool m_isMoving = false;
-
-    public Vector2 InputVec => m_inputVec;
 
     private void Awake()
     {
@@ -35,80 +31,70 @@ public class Player : MonoBehaviour
         m_spr = GetComponent<SpriteRenderer>();
         m_animator = GetComponent<Animator>();
         m_scanner = GetComponent<Scanner>();
-
-        //m_mouse = Mouse.current;
     }
 
-    private void OnMove(InputValue value)
+    private void Update()
     {
-        m_inputVec = value.Get<Vector2>();
-    }
+        // Use the new Input System to handle mouse input.
+        Mouse mouse = Mouse.current;
+        if (mouse == null) return; // Exit if no mouse is present
 
-    private void OnMouseDrag()
-    {
-        m_lastMousePos = Mouse.current.position.ReadValue();
-    }
-
-    private void OnMouseUp()
-    {
-        Vector2 worldPos = Camera.main.ScreenToWorldPoint(m_lastMousePos);
-        Vector2 direction = (worldPos - m_rb.position);
-        float magnitude = direction.magnitude;
-        direction.Normalize();
-        direction *= -1; // invert direction
-        m_rb.AddForce(direction * m_speed, ForceMode2D.Impulse);
-    }
-
-    //private void Update()
-    //{
-    //    if (m_mouse.leftButton.isPressed && m_dragging == false)
-    //        OnDragStart();
-    //    else if (m_mouse.leftButton.isPressed == false && m_dragging == true)
-    //        OnDragEnd();
-    //    
-    //    if (!m_dragging && m_isMoving)
-    //    {
-    //        if(m_rb.linearVelocity.magnitude <= 0.5)
-    //        {
-    //            m_rb.linearVelocity = Vector2.zero;
-    //            m_rb.angularVelocity = 0f;
-    //            //GameManager.Instance.SetFreezeEnemy(false);
-    //        }
-    //    }
-    //}
-
-    private void OnDragStart()
-    {
-        //m_dragging = true;
-        //GameManager.Instance.SetFreezeEnemy(true);
-    }
-
-    private void OnDragEnd()
-    {
-        //m_dragging = false;
-        m_lastMousePos = Mouse.current.position.ReadValue();
-        Vector2 worldPos = Camera.main.ScreenToWorldPoint(m_lastMousePos);
-        Vector2 direction = (worldPos - m_rb.position);
-        float magnitude = direction.magnitude;
-        direction.Normalize();
-        direction *= -1; // invert direction
-        m_rb.AddForce(direction * m_speed * magnitude, ForceMode2D.Impulse);
-        //m_isMoving = true;
+        // On mouse button press, start dragging.
+        if (mouse.leftButton.wasPressedThisFrame)
+        {
+            m_isDragging = true;
+            m_dragStartPosition = GetMouseWorldPosition();
+        }
+        // On mouse button release, end dragging and launch.
+        else if (mouse.leftButton.wasReleasedThisFrame && m_isDragging)
+        {
+            m_isDragging = false;
+            Launch();
+        }
     }
 
     private void FixedUpdate()
     {
-        Vector2 moveDirection = m_inputVec.normalized;
-        m_rb.MovePosition(m_rb.position + moveDirection * m_speed * Time.fixedDeltaTime);
+        // If not dragging and the player is moving slowly, bring them to a complete stop.
+        if (!m_isDragging && m_rb.velocity.magnitude > 0 && m_rb.velocity.magnitude < stopVelocityThreshold)
+        {
+            m_rb.velocity = Vector2.zero;
+            m_rb.angularVelocity = 0f;
+        }
     }
 
     private void LateUpdate()
     {
-        m_animator.SetFloat("Speed", m_inputVec.magnitude);
-
-        if (m_inputVec.x != 0 )
+        // Flip the sprite based on the horizontal velocity.
+        if (m_rb.velocity.x != 0)
         {
-            m_spr.flipX = m_inputVec.x < 0;
+            m_spr.flipX = m_rb.velocity.x < 0;
         }
     }
+
+    /// <summary>
+    /// Calculates the launch vector and applies force to the Rigidbody.
+    /// </summary>
+    private void Launch()
+    {
+        Vector2 dragEndPosition = GetMouseWorldPosition();
+        Vector2 launchVector = m_dragStartPosition - dragEndPosition; // Direction is from end to start
+
+        // Only launch if the drag distance is significant enough.
+        if (launchVector.magnitude > minDragDistance)
+        {
+            float force = launchVector.magnitude * launchForceMultiplier;
+            m_rb.AddForce(launchVector.normalized * force, ForceMode2D.Impulse);
+        }
+    }
+
+    /// <summary>
+    /// Gets the current mouse position in world coordinates.
+    /// </summary>
+    /// <returns>The mouse position in 2D world space.</returns>
+    private Vector2 GetMouseWorldPosition()
+    {
+        return Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+    }
 }
+

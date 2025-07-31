@@ -2,46 +2,93 @@ using UnityEngine;
 
 public class Weapon : MonoBehaviour
 {
-    [SerializeField]
-    int m_id = 0;
-    [SerializeField]
-    PrefabsType m_prefabId = PrefabsType.Melee;
-    [SerializeField]
-    float m_damage = 0f;
-    [SerializeField]
-    int count = 0;
-    [SerializeField]
-    float m_attackSpeed = 0f;
+    public WeaponData weaponData;
 
     private Player m_player;
-
     private float m_timer = 0f;
+
+    // Current stats, can be modified by level-ups and other effects
+    private float m_currentDamage;
+    private int m_currentCount;
+    private float m_currentAttackSpeed;
+    private int m_currentPenetration;
+    private float m_currentProjectileSpeed;
 
     private void Awake()
     {
         m_player = GetComponentInParent<Player>();
         if (m_player == null)
-        {
-            Debug.LogError("Player not found in parent.");
+        { 
+            Debug.LogError("Player component not found in parent game objects.");
         }
     }
 
     private void Start()
     {
-        Init();
+        if (weaponData != null)
+        {
+            Init();
+        }
+        else
+        {
+            Debug.LogError("WeaponData is not assigned to the weapon.");
+        }
     }
 
-    public void WeaponLogic()
+    private void Update()
     {
-        switch (m_id)
+        if (weaponData == null) return;
+
+        WeaponLogic();
+    }
+
+    public void Init()
+    {
+        // Initialize current stats from the ScriptableObject
+        m_currentDamage = weaponData.damage;
+        m_currentCount = weaponData.count;
+        m_currentAttackSpeed = weaponData.attackSpeed;
+        m_currentPenetration = weaponData.penetration;
+        m_currentProjectileSpeed = weaponData.projectileSpeed;
+
+        // Specific initialization logic based on weapon ID
+        switch (weaponData.weaponId)
         {
-            case 0:
-                transform.Rotate(Vector3.back * -m_attackSpeed * Time.deltaTime);
+            case 0: // Example: Rotating weapon
+                Batch();
+                break;
+            case 1: // Example: Ranged weapon
                 break;
             default:
-                m_timer += Time.deltaTime;
+                break;
+        }
+    }
 
-                if (m_timer > m_attackSpeed)
+    public void LevelUp(float damage, int count, float attackSpeed, int penetration)
+    {
+        // Apply level-up bonuses
+        this.m_currentDamage += damage;
+        this.m_currentCount += count;
+        this.m_currentAttackSpeed -= attackSpeed; // Assuming lower is better
+        this.m_currentPenetration += penetration;
+
+        // Re-apply changes, for example, for rotating weapons
+        if (weaponData.weaponId == 0)
+        {
+            Batch();
+        }
+    }
+
+    private void WeaponLogic()
+    {
+        switch (weaponData.weaponId)
+        {
+            case 0: // Rotating weapon logic
+                transform.Rotate(Vector3.back * -m_currentAttackSpeed * Time.deltaTime);
+                break;
+            default: // Ranged weapon logic
+                m_timer += Time.deltaTime;
+                if (m_timer > m_currentAttackSpeed)
                 {
                     m_timer = 0f;
                     Fire();
@@ -50,108 +97,61 @@ public class Weapon : MonoBehaviour
         }
     }
 
-    [ContextMenu("TestLVUp")]
-    public void TestLVUp()
-    {
-        LevelUp(1f, 1);
-    }
-
-    public void LevelUp(float damage, int count)
-    {
-        this.m_damage += damage;
-        this.count += count;
-
-        if (m_id == 0)
-        {
-            Batch();
-        }
-    }
-
-    public void Init()
-    {
-        switch (m_id)
-        {
-            case 0:
-                m_attackSpeed = 150f;
-                Batch();
-                break;
-
-            case 1:
-                m_attackSpeed = 0.5f;
-                break;
-            default:
-                break;
-        }
-    }
-
     private void Batch()
     {
-        for (int i = 0; i < count; i++)
+        // Clear existing children before creating new ones
+        foreach (Transform child in transform)
         {
-            SpawnData_Bullet data = new SpawnData_Bullet();
-            data.damage = m_damage;
-            data.per = -1;  // -1은 무한대
-            Transform bullet;
-            if (i < transform.childCount)
+            GameManager.Instance.poolManager.Release(child.gameObject);
+        }
+
+        for (int i = 0; i < m_currentCount; i++)
+        {
+            if (weaponData.projectilePrefab != null)
             {
-                bullet = transform.GetChild(i);
+                GameObject bulletObj = GameManager.Instance.poolManager.Get(weaponData.projectilePrefab);
+                bulletObj.transform.parent = transform;
+                bulletObj.transform.localPosition = Vector3.zero;
+                bulletObj.transform.localRotation = Quaternion.identity;
+
+                Vector3 rot = Vector3.forward * 360 * i / m_currentCount;
+                bulletObj.transform.Rotate(rot);
+                bulletObj.transform.Translate(bulletObj.transform.up * 1.5f, Space.World);
+
+                Bullet bulletScript = bulletObj.GetComponent<Bullet>();
+                if (bulletScript != null)
+                {
+                    bulletScript.Init(m_currentDamage, m_currentPenetration, bulletObj.transform.up, m_currentProjectileSpeed);
+                }
             }
             else
             {
-                bullet = GameManager.Instance.SpawnBullet(m_prefabId, data).transform;
-                bullet.parent = transform;
+                Debug.LogError("Projectile prefab is not set in WeaponData.");
             }
-            bullet.localPosition = Vector3.zero;
-            bullet.localRotation = Quaternion.identity;
-
-            Vector3 rot = Vector3.forward * 360 * i / count;
-            bullet.Rotate(rot);
-            bullet.Translate(bullet.up * 1.5f, Space.World);
         }
     }
 
-    void Fire()
+    private void Fire()
     {
-        if (m_id == 0)
-        {
-            return;
-        }
-        if (m_player == null)
-        {
-            Debug.LogError("Player not found.");
-            return;
-        }
-        var temp = m_player.Scanner.NearestTarget;
-        if (temp == null)
-        {
-            Debug.LogError("Target not found.");
-            return;
-        }
+        if (m_player.Scanner.NearestTarget == null) return;
 
-        Vector3 targetPos = temp.position;
-
+        Vector3 targetPos = m_player.Scanner.NearestTarget.position;
         Vector3 direction = (targetPos - transform.position).normalized;
 
-
-
-        SpawnData_Bullet data = new SpawnData_Bullet();
-        data.damage = m_damage;
-        data.per = count;
-        data.direction = direction;
-        var instance = GameManager.Instance.SpawnBullet(m_prefabId, data);
-        if (instance == null)
+        if (weaponData.projectilePrefab != null)
         {
-            Debug.LogError("Bullet instance is null.");
-            return;
+            GameObject projectile = GameManager.Instance.poolManager.Get(weaponData.projectilePrefab);
+            projectile.transform.position = transform.position;
+            
+            Bullet bulletScript = projectile.GetComponent<Bullet>();
+            if (bulletScript != null)
+            {
+                bulletScript.Init(m_currentDamage, m_currentPenetration, direction, m_currentProjectileSpeed);
+            }
         }
-
-        instance.transform.position = transform.position;
-        instance.transform.rotation = Quaternion.FromToRotation(Vector3.up, direction);
+        else
+        {
+            Debug.LogError("Projectile prefab is not set in WeaponData.");
+        }
     }
-
-    private void Update()
-    {
-        WeaponLogic();
-    }
-
 }

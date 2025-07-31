@@ -1,67 +1,85 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
+
 public class PoolManager : MonoBehaviour
 {
-    [SerializeField]
-    GameObject[] m_prefabs;
+    public static PoolManager Instance { get; private set; }
 
-    [SerializeField]
-    List<GameObject>[] m_pools;
+    [Tooltip("The prefabs that will be pooled.")]
+    [SerializeField] private GameObject[] prefabs;
+
+    private Dictionary<GameObject, Queue<GameObject>> m_poolDictionary;
 
     private void Awake()
     {
-        m_pools = new List<GameObject>[m_prefabs.Length];
-
-        for (int index = 0; index < m_pools.Length; index++)
+        if (Instance == null)
         {
-            m_pools[index] = new List<GameObject>();
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            InitializePools();
+        }
+        else
+        {
+            Destroy(gameObject);
         }
     }
 
-    public List<GameObject> GetPool(PrefabsType type)
+    private void InitializePools()
     {
-        return GetPool((int)type);
+        m_poolDictionary = new Dictionary<GameObject, Queue<GameObject>>();
+
+        foreach (GameObject prefab in prefabs)
+        {
+            m_poolDictionary.Add(prefab, new Queue<GameObject>());
+        }
     }
 
-    public List<GameObject> GetPool(int index)
+    public GameObject Get(GameObject prefab)
     {
-        // 인덱스 초과 방지
-        if (m_prefabs.Length <= index)
+        if (!m_poolDictionary.ContainsKey(prefab))
+        {
+            Debug.LogWarning($"Pool for prefab {prefab.name} does not exist.");
             return null;
-        return m_pools[index];
-    }
-
-    public GameObject Get(PrefabsType type)
-    {
-        return Get((int)type);
-    }
-
-    private GameObject Get(int index)
-    {
-        GameObject select = null;
-        // 인덱스 초과 방지
-        if (m_prefabs.Length <= index)
-            return null;
-
-        // 비활성화된 오브젝트가 있는지 확인
-        foreach (GameObject obj in m_pools[index])
-        {
-            if (!obj.activeSelf)
-            {
-                select = obj;
-                select.SetActive(true);
-
-                break;
-            }
         }
 
-        // 풀에 비활성화된 오브젝트가 없을 경우 새로 생성
-        if (select == null)
+        Queue<GameObject> poolQueue = m_poolDictionary[prefab];
+
+        if (poolQueue.Count > 0)
         {
-            select = Instantiate(m_prefabs[index], transform);
-            m_pools[index].Add(select);
+            GameObject obj = poolQueue.Dequeue();
+            obj.SetActive(true);
+            return obj;
+        }
+        else
+        {
+            GameObject newObj = Instantiate(prefab);
+            return newObj;
+        }
+    }
+
+    public void Release(GameObject obj)
+    {
+        GameObject prefab = obj.GetComponent<Poolable>()?.prefab;
+        if (prefab == null)
+        {
+            Debug.LogWarning($"Object {obj.name} does not have a Poolable component with a prefab reference. Destroying it instead.");
+            Destroy(obj);
+            return;
         }
 
-        return select;
+        if (!m_poolDictionary.ContainsKey(prefab))
+        { 
+            Debug.LogWarning($"Pool for prefab {prefab.name} does not exist. Creating a new one.");
+            m_poolDictionary.Add(prefab, new Queue<GameObject>());
+        }
+
+        obj.SetActive(false);
+        m_poolDictionary[prefab].Enqueue(obj);
     }
+}
+
+// Add this component to any prefab that you want to be poolable.
+public class Poolable : MonoBehaviour
+{
+    public GameObject prefab;
 }

@@ -1,40 +1,29 @@
 using UnityEngine;
 
-
-public enum PrefabsType
-{
-    Enemy = 0,
-    Melee = 1,
-    Bullet_1 = 2,
-}
-
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
-    [SerializeField]
-    Player m_player;
+
+    [Header("Player")]
+    [SerializeField] private Player m_player;
     public Player Player => m_player;
-    [SerializeField]
-    PoolManager m_poolManager;
-    private PoolManager PoolManager => m_poolManager;
 
-    [SerializeField]
-    private float m_GameTime = 0;
+    [Header("Game State")]
+    [SerializeField] private float m_GameTime = 0;
     public float GameTime => m_GameTime;
-
-    [SerializeField]
-    private float m_MaxGameTime = 20f;
+    [SerializeField] private float m_MaxGameTime = 20f;
     public float MaxGameTime => m_MaxGameTime;
 
-    [SerializeField]
-    private float m_SpawnTime = 1f;
-    public float SpawnTime => m_SpawnTime;
-
-    [SerializeField]
-    private int m_Level = 0;
+    [Header("Level & Experience")]
+    [SerializeField] private int m_Level = 1;
     public int Level => m_Level;
+    [SerializeField] private int m_Experience = 0;
+    [SerializeField] private int[] m_nextExp; // Experience required for next level
 
-   // bool m_isFreeze = false;
+    // Reference to the PoolManager
+    public PoolManager poolManager { get; private set; }
+    // Reference to the EquipmentManager
+    public EquipmentManager equipmentManager { get; private set; }
 
     private void Awake()
     {
@@ -42,6 +31,27 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+
+            poolManager = GetComponent<PoolManager>();
+            if (poolManager == null) poolManager = FindObjectOfType<PoolManager>();
+            if (poolManager == null) Debug.LogError("PoolManager not found in the scene.");
+
+            if (m_player != null)
+            {
+                equipmentManager = m_player.GetComponent<EquipmentManager>();
+                if (equipmentManager == null) Debug.LogError("EquipmentManager not found on the Player.");
+            }
+            else
+            {
+                Debug.LogError("Player is not assigned in the GameManager.");
+            }
+
+            // Initialize experience table
+            m_nextExp = new int[100]; // Max level 100
+            for (int i = 0; i < m_nextExp.Length; i++)
+            {
+                m_nextExp[i] = Mathf.FloorToInt(10 * Mathf.Pow(1.1f, i));
+            }
         }
         else
         {
@@ -56,50 +66,28 @@ public class GameManager : MonoBehaviour
         {
             m_GameTime = m_MaxGameTime;
         }
-        m_Level = Mathf.FloorToInt(m_GameTime / 10f);
     }
 
-    //public void SetFreezeEnemy(bool _isFreeze)
-    //{
-    //    m_isFreeze = _isFreeze;
-    //    var enemyPool = m_poolManager.GetPool(PrefabsType.Enemy);
-    //
-    //    foreach (var item in enemyPool)
-    //    {
-    //        if (item.activeSelf)
-    //        {
-    //            var enemy = item.GetComponent<Enemy>();
-    //            if (enemy != null)
-    //            {
-    //                enemy.freeze = _isFreeze;
-    //            }
-    //        }
-    //    }
-    //}
-
-    public GameObject SpawnEnemy(SpawnData_Enemy _spawnData)
+    public void AddExperience(int amount)
     {
-        var temp =  PoolManager.Get(PrefabsType.Enemy);
-        if (temp == null)
-            return null;
-        var enemy = temp.GetComponent<Enemy>();
-        if (enemy == null)
+        m_Experience += amount;
+        CheckLevelUp();
+    }
+
+    private void CheckLevelUp()
+    {
+        if (m_Level - 1 >= m_nextExp.Length) return; // Max level reached
+
+        if (m_Experience >= m_nextExp[m_Level - 1])
         {
-            Debug.LogError("Enemy component not found on the prefab.");
-            Destroy(temp);
-            return null;
-        }
-        enemy.Init(_spawnData);
-        //enemy.freeze = m_isFreeze;
-        return temp;
-    }
+            m_Experience -= m_nextExp[m_Level - 1];
+            m_Level++;
+            Debug.Log($"Level Up! New Level: {m_Level}");
+            // Here you would typically pause the game and show the level up UI.
+            // For now, we just log it.
 
-    public GameObject SpawnBullet(PrefabsType type, SpawnData_Bullet _bulletData)
-    {
-        var temp = PoolManager.Get(type);
-        if (temp == null)
-            return null;
-        temp.GetComponent<Bullet>()?.Init(_bulletData);
-        return temp;
+            // Recursive call to handle multiple level ups at once
+            CheckLevelUp();
+        }
     }
 }
